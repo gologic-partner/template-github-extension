@@ -1,12 +1,35 @@
 import { Octokit } from "@octokit/core";
 import express from "express";
 import { Readable } from "node:stream";
+import { fetchConfluencePageContent } from "./confluenceClient.js";
 
 const app = express()
 
 app.get("/", (req, res) => {
-  res.send("Ahoy, matey! Welcome to the Blackbeard Pirate GitHub Copilot Extension!")
+  res.send("This is a GitHub Copilot Extension that can retrieve a confluence page")
 });
+
+
+app.get("/callback", (req, res) => {
+  const code = req.query.code;
+  const state = req.query.state;
+  const error = req.query.error;
+
+  if (error) {
+    console.error("Error during authentication:", error);
+    return res.status(500).send("Authentication failed");
+  }
+
+  if (!code) {
+    console.error("No code received");
+    return res.status(400).send("No code received");
+  }
+
+  // Handle the authentication code here
+  console.log("Received authentication code:", code);
+  res.send("Authentication successful! You can close this window.");
+}
+);
 
 app.post("/", express.json(), async (req, res) => {
   // Identify the user, using the GitHub API token provided in the request headers.
@@ -19,15 +42,38 @@ app.post("/", express.json(), async (req, res) => {
   const payload = req.body;
   console.log("Payload:", payload);
 
-  // Insert a special pirate-y system message in our message list.
+  // Récupérer le pageId à partir du dernier message utilisateur
+  let pageId = null;
+  if (Array.isArray(payload.messages) && payload.messages.length > 0) {
+    const lastMessage = payload.messages[payload.messages.length - 1];
+    if (lastMessage && typeof lastMessage.content === "string") {
+      // Extraire le premier entier trouvé dans le contenu du message
+      const match = lastMessage.content.match(/\d+/);
+      if (match) {
+        pageId = parseInt(match[0], 10);
+      }
+    }
+  }
+  console.log("Page ID:", pageId);
+  let confluenceContent = "";
+  if (pageId) {
+    try {
+      confluenceContent = await fetchConfluencePageContent(pageId);
+    } catch (err) {
+      console.error("Erreur Confluence:", err.message);
+      return res.status(400).json({ error: `Erreur lors de la récupération de la page Confluence: ${err.message}` });
+    }
+  }
+
+  // Insérer le message système avec le contenu Confluence (si disponible)
   const messages = payload.messages;
+  let systemContent = "You are a helpful assistant that answer question about a confluence page";
+  if (confluenceContent) {
+    systemContent += `\n\nHere is the content of the Confluence page:\n${confluenceContent}`;
+  }
   messages.unshift({
     role: "system",
-    content: "You are a helpful assistant that replies to user messages as if you were the Blackbeard Pirate.",
-  });
-  messages.unshift({
-    role: "system",
-    content: `Start every response with the user's name, which is @${user.data.login}`,
+    content: systemContent,
   });
 
   // Use Copilot's LLM to generate a response to the user's messages, with

@@ -1,11 +1,12 @@
-const axios = require('axios');
+import axios from 'axios';
+import 'dotenv/config';
 
 /**
  * Fetch Confluence page content by pageId
  * @param {string} pageId - The Confluence page ID
  * @returns {Promise<string>} - The page content (HTML)
  */
-async function fetchConfluencePageContent(pageId) {
+export async function fetchConfluencePageContent(pageId) {
   const baseUrl = process.env.CONFLUENCE_BASE_URL;
   const email = process.env.CONFLUENCE_EMAIL;
   const apiToken = process.env.CONFLUENCE_API_TOKEN;
@@ -24,17 +25,20 @@ async function fetchConfluencePageContent(pageId) {
         'Accept': 'application/json'
       }
     });
-    const content = response.data?.body?.storage?.value;
+    console.log('Confluence response status code:', response.status);
+    console.log('Confluence response:', response.data);
+    const content = response?.data?.body?.storage?.value;
+    console.log('Confluence content:', content);
     if (!content) {
       throw new Error('No content found for this page');
     }
     return content;
-  } catch (error) {
-    if (error.response && error.response.status === 404) {
+  } catch (err) {
+    if (err.response && err.response.status === 404) {
+      console.error('Error fetching Confluence page:', err);
       throw new Error('Page not found');
     }
-    throw new Error(error.message || 'Failed to fetch Confluence page');
+    console.error('Error fetching Confluence page:', err);
+    throw new Error('Failed to fetch Confluence page');
   }
 }
-
-module.exports = { fetchConfluencePageContent }; 
