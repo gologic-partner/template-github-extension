@@ -28,8 +28,7 @@ app.get("/callback", (req, res) => {
   // Handle the authentication code here
   console.log("Received authentication code:", code);
   res.send("Authentication successful! You can close this window.");
-}
-);
+});
 
 app.post("/", express.json(), async (req, res) => {
   // Identify the user, using the GitHub API token provided in the request headers.
@@ -67,7 +66,7 @@ app.post("/", express.json(), async (req, res) => {
 
   // Insérer le message système avec le contenu Confluence (si disponible)
   const messages = payload.messages;
-  let systemContent = "You are a helpful assistant that answer question about a confluence page";
+  let systemContent = "You are a helpful assistant that sumarize the content of a Confluence page. You can also answer questions about the content of the page.";
   if (confluenceContent) {
     systemContent += `\n\nHere is the content of the Confluence page:\n${confluenceContent}`;
   }
