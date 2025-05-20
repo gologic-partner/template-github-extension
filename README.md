@@ -16,10 +16,10 @@ To run:
 npm start
 ```
 
-or in watch mode:
+To run the mcp server:
 
 ```bash
-npm run dev
+npm start:mcp
 ```
 
 ## Documentation

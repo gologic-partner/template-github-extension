@@ -3,9 +3,9 @@
   "private": "true",
   "description": "A basic example of a Copilot Extension with confluence integration",
   "scripts": {
-    "start": "node index.js",
+    "start": "npx ts-node index.ts",
     "dev": "node --watch index.js",
-    "start:mcp": "tsc mcp-server.ts"
+    "start:mcp": "npx ts-node mcp-server.ts"
   },
   "type": "commonjs",
   "dependencies": {
